@@ -5,12 +5,8 @@
 }
 
 <head>
-    <script type="text/javascript">
-        var onloadCallback = function () {
-            alert("grecaptcha is ready!");
-            grecaptcha.render();
-        };
-    </script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <h1>@ViewBag.Header</h1>
@@ -59,15 +55,44 @@
                 <textarea asp-for="Comments" class="form-control"></textarea>
                 <span asp-validation-for="Comments" class="text-danger"></span>
             </div>
+
             <div class="form-group">
-                <input type="submit" value="Submit" class="btn btn-primary" />
+                <input type="submit" id="submit_button" value="Submit" class="btn btn-primary" />
                 <input type="reset" value="Reset" class="btn btn-primary"/>
             </div>
-            <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit"
-                    async defer>
-            </script>
+
+            <div class="g-recaptcha" data-sitekey="@ViewBag.ReCaptchaSiteKey"></div>
+
         </form>
-       
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $(document).on('click', '#submit_button', function () {
+                    // Check if the reCAPTCHA checkbox is checked
+                    if (!grecaptcha.getResponse()) {
+                        alert("Please complete the reCAPTCHA.");
+                        return;
+                    }
+
+                    // Continue with form submission
+                    $.ajax({
+                        url: "/contact",
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        data: JSON.stringify({ reCaptchaToken: grecaptcha.getResponse() }),
+                        success: function (result, status, xhr) {
+                            $("#generatedToken").html("Token Result: " + status + " " + result);
+                        },
+                        error: function (xhr, status, error) {
+                            $("#generatedToken").html("Token Result: " + status + " " + error + " " +
+                                xhr.status + " " + xhr.statusText);
+                        }
+                    });
+                });
+            });
+        </script>
     </div>
 </div>
 

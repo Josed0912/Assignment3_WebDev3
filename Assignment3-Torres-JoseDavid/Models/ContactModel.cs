@@ -6,6 +6,14 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace Assignment3_Torres_JoseDavid.Models
 {
+    /*
+     * Course:      Web Programming 3
+     * Assessment:  Assignment 3
+     * Created by:  Jose David Torres
+     * Date:        14/11/2023
+     * Class Name:  ContactModel.cs
+     * Description: Provides the model for the Contact Entity, contains the business logic for each field.
+     */
     public class ContactModel
     {
                                                           
@@ -30,7 +38,7 @@ namespace Assignment3_Torres_JoseDavid.Models
 
         [Required]
         [DataType(DataType.PostalCode)]
-        [RegularExpression(@"/^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z][ -]?\d[ABCEGHJ-NPRSTV-Z]\d$/i")]
+        [RegularExpression("[ABCEGHJKLMNPRSTVXY][0-9][ABCEGHJKLMNPRSTVWXYZ][0-9][ABCEGHJKLMNPRSTVWXYZ][0-9]")]
 
         public string PostalCode { get; set; }
 

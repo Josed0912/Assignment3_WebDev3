@@ -1,6 +1,9 @@
 ﻿using Assignment3_Torres_JoseDavid.Models;
+using Assignment3_Torres_JoseDavid.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,9 +17,15 @@ namespace Assignment3_Torres_JoseDavid.Controllers
     {
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        private readonly IConfiguration _configuration;
+
+        private readonly IEmailSender _emailSender;
+
+        public HomeController(ILogger<HomeController> logger, IConfiguration configuration, IEmailSender emailSender)
         {
             _logger = logger;
+            _configuration = configuration;
+            _emailSender = emailSender;
         }
 
         public IActionResult Index()
@@ -39,7 +48,63 @@ namespace Assignment3_Torres_JoseDavid.Controllers
 
             contact.CreateDate = DateTime.Now;
 
-            ViewBag.SampleTopics = new List<SelectListItem>
+            ViewBag.SampleTopics = GetSampleTopics();
+
+            ViewBag.ReCaptchaSiteKey = _configuration["GoogleReCAPTCHA:SiteKey"];
+
+            if (TempData.ContainsKey("SelectedTopic"))
+            {
+                contact.Topic = TempData["SelectedTopic"].ToString();
+            }
+
+            return View(contact);
+        }
+
+        [HttpPost("contact")]
+        public async Task<IActionResult> Contact(ContactModel contact, [FromServices] ReCaptchaValidationService reCaptchaValidationService)
+        {
+            var recaptchaResponse = Request.Form["g-recaptcha-response"];
+
+            var isReCaptchaValid = await reCaptchaValidationService.IsReCaptchaValid(recaptchaResponse);
+
+            if (!isReCaptchaValid)
+            {
+                ModelState.AddModelError("ReCaptcha", "reCAPTCHA validation failed");
+
+                TempData["SelectedTopic"] = contact.Topic;
+
+                ViewBag.SampleTopics = GetSampleTopics();
+                ViewBag.ReCaptchaSiteKey = _configuration["GoogleReCAPTCHA:SiteKey"];
+
+                return View(contact);
+            }
+
+            if (ModelState.IsValid)
+            {
+                TempData.Remove("SelectedTopic");
+
+                (_emailSender as SendGridEmailSender).Contact = contact; 
+
+                await _emailSender.SendEmailAsync(contact.Email, contact.Topic, contact.Comments);
+
+                return View("Success", contact);
+            }
+            else
+            {
+                return View();
+            }
+            
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        private List<SelectListItem> GetSampleTopics()
+        {
+            return new List<SelectListItem>
             {
             new SelectListItem{
                 Text= "My order",
@@ -90,14 +155,6 @@ namespace Assignment3_Torres_JoseDavid.Controllers
                 Text="Sponsorship and donations",
                 Value="Sponsorship and donations"
             } };
-
-            return View(contact);
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

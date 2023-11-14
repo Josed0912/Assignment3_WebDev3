@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Assignment3_Torres_JoseDavid.Models;
 
 namespace Assignment3_Torres_JoseDavid.Data
@@ -13,6 +10,6 @@ namespace Assignment3_Torres_JoseDavid.Data
             : base(options)
         {
         }
-        public DbSet<Assignment3_Torres_JoseDavid.Models.ContactModel> ContactModel { get; set; }
+        public DbSet<ContactModel> ContactModel { get; set; }
     }
 }
